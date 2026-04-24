@@ -1,0 +1,38 @@
+{
+  "name": "mcp-supabase-latam",
+  "version": "0.1.0",
+  "description": "MCP server that exposes a Supabase + pgvector knowledge base to Claude Desktop / Cursor / Claude Code. Spanish-first, multi-tenant aware (RLS). Ships with an in-memory demo KB so the server runs with zero external setup.",
+  "license": "MIT",
+  "author": "Santiago Arteta",
+  "type": "module",
+  "bin": {
+    "mcp-supabase-latam": "dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc --watch",
+    "demo": "node dist/scripts/cli-demo.js",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "rag",
+    "supabase",
+    "pgvector",
+    "latam"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "_comment": "Drop this into claude_desktop_config.json under 'mcpServers'. Adjust the 'command' path to your clone.",
+  "mcpServers": {
+    "supabase-latam": {
+      "command": "node",
+      "args": [
+        "/absolute/path/to/mcp-supabase-latam/dist/server.js"
+      ]
+    }
+  }
+}
