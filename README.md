@@ -18,24 +18,27 @@ you plug in real data.
 
 ## Why this exists
 
-Most public MCP servers I've seen make two assumptions that break for
-LATAM SMB work:
+I write WhatsApp bots and small AI workflows for LATAM SMBs — clinics,
+law firms, real estate offices. As MCP started showing up I went
+looking for a server that would let me drop in a knowledge base per
+client and let Claude pull from it. Most of the public ones I tried
+had the same two issues:
 
-1. **Single-tenant.** They expose "the" knowledge base — as if every
-   consumer of the MCP server is querying the same data. In practice
-   a freelancer/agency running bots for 3-5 clients needs hard
-   separation between their KBs, with the tenant id driven from the
-   auth context (or in a demo, from a parameter).
-2. **English-only.** Field descriptions, error messages, and often the
-   tool docstrings are English-centric. Claude answers better when the
-   tool description itself names what the data is in the target
-   language — "aranceles y obras sociales" reads more naturally when
-   the tool description is explicit about Spanish KBs.
+The first issue is single-tenant. They expose "the" knowledge base
+as if every consumer were querying the same data. That works for a
+solo developer using one MCP server in their own Claude Desktop. It
+doesn't work for an agency with 3-5 clients in the same codebase.
 
-This server fixes both. The tool definitions explicitly state the
-tenant filter is mandatory. The seed data is Argentine Spanish with
-real clinic / juridico / inmobiliaria vocabulary ("turno", "obra
-social", "garantia propietaria").
+The second issue is that everything is English-by-default. Tool
+descriptions, error messages, schema field names. Claude reads those
+and adapts its tool-calling behavior — describing the KB in English
+while the data is Spanish gives weirdly mixed-language responses
+sometimes. Naming things in the target language ("aranceles", "obra
+social") helps the model anchor.
+
+So this server is opinionated about both: tenant id is required on
+every search, the seed data is Argentine Spanish, the tool docs say
+explicitly that there is no cross-tenant search mode.
 
 ## What it exposes
 
