@@ -5,7 +5,7 @@
  *
  * Ships with an in-memory KB (from seed.ts) so the server runs with zero
  * external setup. Replace the KB instance with a Supabase-backed one
- * when you plug in real data (see src/kb.ts — it's a 30-line interface).
+ * when you plug in real data (see src/kb.ts -- it's a 30-line interface).
  */
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -23,7 +23,7 @@ const TOOLS = [
   {
     name: "kb_search",
     description:
-      "Search the tenant's knowledge base for passages relevant to a natural-language query. Returns the top N hits with title, snippet, and score. Always filter by tenant_id — there is no 'search across all tenants' mode (that's the point).",
+      "Search the tenant's knowledge base for passages relevant to a natural-language query. Returns the top N hits with title, snippet, and score. Always filter by tenant_id -- there is no 'search across all tenants' mode (that's the point).",
     inputSchema: {
       type: "object",
       properties: {
@@ -58,7 +58,7 @@ const TOOLS = [
   {
     name: "kb_list_tenants",
     description:
-      "List the tenant ids known to this KB. Useful in a demo / discovery flow — in production this tool should usually be disabled and the tenant_id should come from the auth context.",
+      "List the tenant ids known to this KB. Useful in a demo / discovery flow -- in production this tool should usually be disabled and the tenant_id should come from the auth context.",
     inputSchema: { type: "object", properties: {} },
   },
 ];
@@ -131,5 +131,5 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
-// stderr only — stdout is the MCP protocol channel.
+// stderr only -- stdout is the MCP protocol channel.
 console.error("[mcp-supabase-latam] connected via stdio");

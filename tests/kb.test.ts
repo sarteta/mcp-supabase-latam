@@ -24,7 +24,7 @@ describe("InMemoryKB.search", () => {
       tenant_id: "inmobiliaria-norte",
       limit: 5,
     });
-    assert.equal(hits.length, 0, "tenant isolation broken — should have zero hits");
+    assert.equal(hits.length, 0, "tenant isolation broken -- should have zero hits");
   });
 
   it("accent-insensitive", async () => {

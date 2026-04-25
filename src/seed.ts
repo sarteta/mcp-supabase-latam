@@ -1,7 +1,7 @@
 import type { Document } from "./kb.js";
 
 /**
- * Seeded demo data — three tenants (clinic, law firm, real estate) with
+ * Seeded demo data -- three tenants (clinic, law firm, real estate) with
  * a handful of Spanish-language documents each. Enough to exercise
  * tenant isolation and RAG-style retrieval without any external service.
  */

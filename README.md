@@ -4,41 +4,25 @@
 [![node](https://img.shields.io/badge/node-22%20%7C%2023-green)](https://nodejs.org)
 [![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
-A tiny **Model Context Protocol server** that gives Claude (Desktop,
-Cursor, Claude Code) a knowledge base with **multi-tenant isolation** —
-the shape you actually need when you're selling a WhatsApp/Claude bot to
-a clinic, a law firm, and an inmobiliaria from the same codebase.
+Model Context Protocol server that gives Claude (Desktop, Cursor, Claude Code) a knowledge base with **multi-tenant isolation**: tenant id is required on every search, no cross-tenant mode exists.
 
-Ships with an **in-memory seeded KB in Spanish** so the server runs
-with zero external setup. The `KnowledgeBase` interface is ~30 lines —
-swap the implementation for Supabase pgvector (or anything else) when
-you plug in real data.
+Ships with an in-memory seeded KB in Spanish so the server runs with zero external setup. The `KnowledgeBase` interface is around 30 lines, so swapping the implementation for Supabase pgvector (or anything else) is a contained change.
 
 ![demo](./examples/demo.png)
 
-## Why this exists
+```mermaid
+flowchart LR
+    C[Claude Desktop / Cursor / Claude Code] -->|MCP stdio| S[server.ts]
+    S -->|search / get / list| KB[KnowledgeBase interface]
+    KB -.in-memory seed.-> M[InMemoryKB<br/>Spanish demo data]
+    KB -.swap.-> SB[(Supabase<br/>pgvector + RLS)]
+```
 
-I write WhatsApp bots and small AI workflows for LATAM SMBs — clinics,
-law firms, real estate offices. As MCP started showing up I went
-looking for a server that would let me drop in a knowledge base per
-client and let Claude pull from it. Most of the public ones I tried
-had the same two issues:
+## Why multi-tenant matters
 
-The first issue is single-tenant. They expose "the" knowledge base
-as if every consumer were querying the same data. That works for a
-solo developer using one MCP server in their own Claude Desktop. It
-doesn't work for an agency with 3-5 clients in the same codebase.
+A single-tenant MCP server is fine for a developer using one knowledge base in their own Claude Desktop. It does not work for an agency serving multiple clients from the same codebase: any cross-tenant query becomes a data leak risk on a bad tool call.
 
-The second issue is that everything is English-by-default. Tool
-descriptions, error messages, schema field names. Claude reads those
-and adapts its tool-calling behavior — describing the KB in English
-while the data is Spanish gives weirdly mixed-language responses
-sometimes. Naming things in the target language ("aranceles", "obra
-social") helps the model anchor.
-
-So this server is opinionated about both: tenant id is required on
-every search, the seed data is Argentine Spanish, the tool docs say
-explicitly that there is no cross-tenant search mode.
+This server makes tenant id mandatory on every search and document fetch. There is no list-all-documents tool because any cross-tenant enumeration is a tenant-isolation footgun if a prompt injection tricks the model into calling it.
 
 ## What it exposes
 
@@ -47,8 +31,8 @@ Three tools, all tenant-scoped:
 | tool | purpose |
 |------|---------|
 | `kb_search` | Natural-language search over the tenant's KB. Returns ranked hits with title, snippet, score. |
-| `kb_get_document` | Fetch one doc by id, tenant-scoped. Returns null if the doc doesn't exist in that tenant — never leaks another tenant's doc. |
-| `kb_list_tenants` | List known tenants. Useful for demos; in production this should usually be disabled and `tenant_id` should come from auth. |
+| `kb_get_document` | Fetch one doc by id, tenant-scoped. Returns null if the doc does not exist in that tenant. Never leaks another tenant's doc. |
+| `kb_list_tenants` | List known tenants. Useful for demos; in production usually disabled, with `tenant_id` coming from auth. |
 
 ## Run the demo
 
@@ -58,15 +42,15 @@ npm run build
 npm run demo
 ```
 
-Output (abridged — full run is ~40 lines):
+Sample output (abridged):
 
 ```
-[Clinica -- obras sociales]
+[Clinica - obras sociales]
   query:  aceptan OSDE?
   tenant: clinica-san-pablo
   -> [0.500] cli-004  Aranceles y obras sociales
 
-[Inmobiliaria -- requisitos]
+[Inmobiliaria - requisitos]
   query:  que necesito para alquilar
   tenant: inmobiliaria-norte
   -> [0.700] rea-001  Requisitos para alquilar
@@ -75,7 +59,7 @@ Output (abridged — full run is ~40 lines):
 [Tenant isolation]
   query:  horarios de atencion
   tenant: inmobiliaria-norte
-  -> # clinic's 'Horarios de atencion' doc stays hidden — good.
+  -> (the clinic's 'Horarios de atencion' doc stays hidden)
 ```
 
 ## Wire into Claude Desktop
@@ -113,43 +97,38 @@ interface KnowledgeBase {
 }
 ```
 
-Provide a Supabase-backed implementation (pgvector embedding search,
-SELECT filtered by `tenant_id` with RLS policies) and pass it into the
-server instead of `InMemoryKB`. The MCP tool handlers don't change.
+Provide a Supabase-backed implementation (pgvector embedding search, SELECT filtered by `tenant_id` with RLS policies) and pass it into the server instead of `InMemoryKB`. The MCP tool handlers do not change.
+
+## Why Spanish-by-default
+
+Tool descriptions, error messages, schema field names matter. Claude reads tool descriptions before calling and adapts its behavior. Describing a Spanish-data KB in English produces mixed-language responses. Naming things in the target language (`aranceles`, `obra social`) helps the model anchor.
 
 ## Tests
 
 12 unit tests covering:
 
 - Search returns hits within the correct tenant only
-- **Tenant isolation**: query for concept that only exists in tenant A,
-  asked against tenant B, returns zero hits
-- Accent-insensitive matching (`horarios` ≡ `horários`)
+- Tenant isolation: query for a concept that only exists in tenant A, asked against tenant B, returns zero hits
+- Accent-insensitive matching (`horarios` matches `horarios`)
 - Title matches outrank body-only matches
-- `get()` returns null when tenant doesn't match the doc's tenant
+- `get()` returns null when tenant does not match the doc's tenant
 - `listTenants` returns unique + sorted
 
-Run them: `npm test`.
+Run with `npm test`.
 
 ## Roadmap
 
 - [ ] Supabase adapter reference implementation (pgvector + RLS policies + migration SQL)
-- [ ] Auth-context-derived tenant id (so production usage never passes `tenant_id` as a tool argument — the arg becomes a demo-only feature)
+- [ ] Auth-context-derived tenant id (so production usage never passes `tenant_id` as a tool argument)
 - [ ] Batch ingestion CLI (`mcp-supabase-latam ingest <tenant_id> <dir>`)
-- [ ] Portuguese seed data (`seed-pt.ts`) so the same server pattern covers BR markets
+- [ ] Portuguese seed data (`seed-pt.ts`) for BR markets
 
 ## Design notes
 
-- **No `list_all_documents` tool.** On purpose. Any tool that enumerates
-  across tenants is a tenant-isolation footgun when a prompt injection
-  tricks the model into calling it.
-- **Tool descriptions name the filter requirement.** Claude reads the
-  description before calling; stating "filter by tenant_id — there is no
-  cross-tenant mode" reduces the chance of a bad call.
-- **Stderr, not stdout, for logs.** stdout is the MCP protocol channel,
-  so `console.log` breaks everything. This catches a lot of contributors
-  on their first MCP server — the server.ts comment calls it out.
+- No `list_all_documents` tool. Any tool that enumerates across tenants is a tenant-isolation footgun.
+- Tool descriptions name the filter requirement explicitly. Stating "filter by tenant_id, there is no cross-tenant mode" reduces the chance of a bad call.
+- Stderr, not stdout, for logs. stdout is the MCP protocol channel, so `console.log` breaks the wire format. The `server.ts` comment flags this.
 
 ## License
 
-MIT © 2026 Santiago Arteta
+MIT

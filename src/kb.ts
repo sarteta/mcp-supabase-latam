@@ -2,7 +2,7 @@
  * In-memory knowledge base with a cheap lexical scorer.
  *
  * Swap this out for a Supabase pgvector query when you plug in your own
- * data — the KnowledgeBase interface is narrow on purpose.
+ * data -- the KnowledgeBase interface is narrow on purpose.
  *
  * Multi-tenant: every doc has a tenant_id. Searches MUST filter by
  * tenant_id, which is how RLS would enforce this in Supabase.
@@ -67,7 +67,7 @@ export function lexicalScore(doc: Document, query: string): number {
   for (const t of qtokens) if (titleTokens.has(t)) titleBoost += 0.1;
 
   // Intentionally uncapped: title matches should sort strictly above
-  // body-only matches with the same recall. Scores above 1.0 are fine —
+  // body-only matches with the same recall. Scores above 1.0 are fine --
   // search() sorts descending, that's all that matters.
   return recall + titleBoost;
 }
