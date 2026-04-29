@@ -1,6 +1,7 @@
 # mcp-supabase-latam
 
 [![tests](https://github.com/sarteta/mcp-supabase-latam/actions/workflows/tests.yml/badge.svg)](https://github.com/sarteta/mcp-supabase-latam/actions/workflows/tests.yml)
+[![docker](https://github.com/sarteta/mcp-supabase-latam/actions/workflows/docker.yml/badge.svg)](https://github.com/sarteta/mcp-supabase-latam/actions/workflows/docker.yml)
 [![node](https://img.shields.io/badge/node-22%20%7C%2023-green)](https://nodejs.org)
 [![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
